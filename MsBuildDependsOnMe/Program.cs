@@ -1,6 +1,6 @@
 ﻿// -----------------------------------------------------------------------
 // <copyright file="Program.cs" company="Ace Olszowka">
-//  Copyright (c) Ace Olszowka 2018. All rights reserved.
+//  Copyright (c) Ace Olszowka 2018-2019. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
@@ -13,14 +13,21 @@ namespace MsBuildDependsOnMe
     {
         static void Main(string[] args)
         {
-            string targetProject = @"S:\TimsSVN\6x\Trunk\Dotnet\Tests\Utilities\ComputersUnlimited.Tests.Utilities.csproj";
-            string[] targetDirectories = new string[] { @"S:\TimsSVN\6x\Trunk\Dotnet", @"S:\TimsSVN\6x\Trunk\Fusion" };
+            string targetProject = @"S:\TimsSVN\7x\Trunk\Dotnet\Source\Framework\Imaging\Core\Imaging.Core.csproj";
+            string[] targetDirectories = new string[] { @"S:\TimsSVN\7x\Trunk\Dotnet", @"S:\TimsSVN\7x\Trunk\Fusion" };
 
-            IEnumerable<string> projectsThatHaveDirectDependencyOnMe = DependsOnMe.ForDirectReferences(targetProject, targetDirectories);
+            //IEnumerable<string> projectsThatHaveDirectDependencyOnMe = DependsOnMe.ForDirectReferences(targetProject, targetDirectories);
 
-            foreach (string project in projectsThatHaveDirectDependencyOnMe)
+            //foreach (string project in projectsThatHaveDirectDependencyOnMe)
+            //{
+            //    Console.WriteLine(project);
+            //}
+
+            IEnumerable<string> graphLines = DependsOnMe.GraphDirectReferences(targetProject, targetDirectories);
+
+            foreach (string graphLine in graphLines)
             {
-                Console.WriteLine(project);
+                Console.WriteLine(graphLine);
             }
         }
     }

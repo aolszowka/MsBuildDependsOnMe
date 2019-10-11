@@ -1,6 +1,6 @@
 ﻿// -----------------------------------------------------------------------
 // <copyright file="DependsOnMe.cs" company="Ace Olszowka">
-//  Copyright (c) Ace Olszowka 2018. All rights reserved.
+//  Copyright (c) Ace Olszowka 2018-2019. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
@@ -42,9 +42,15 @@ namespace MsBuildDependsOnMe
 
         internal static IEnumerable<string> ForDirectReferences(string targetProject, IEnumerable<string> targetDirectories)
         {
-            ProjectInformation targetProjectInformation = ProjectInformationFactory.Create(targetProject);
-
             IEnumerable<ProjectInformation> projectsToScan = LoadProjectInformation(targetDirectories);
+
+            return ForDirectReferences(targetProject, projectsToScan.ToArray());
+
+        }
+
+        internal static IEnumerable<string> ForDirectReferences(string targetProject, ProjectInformation[] projectsToScan)
+        {
+            ProjectInformation targetProjectInformation = ProjectInformationFactory.Create(targetProject);
 
             return
                 projectsToScan
@@ -52,6 +58,66 @@ namespace MsBuildDependsOnMe
                 .Where(projectToScan => projectToScan.DependentOnProjects.ContainsKey(targetProjectInformation.ProjectGuid))
                 .Select(projectInformation => projectInformation.Path)
                 .Distinct();
+        }
+
+        internal static IEnumerable<string> GraphDirectReferences(string targetProject, IEnumerable<string> targetDirectories)
+        {
+            yield return "digraph g {";
+
+            yield return $"\"{ProjectInformationFactory.Create(targetProject).AssemblyName}\"";
+
+            var directReferences = ForDirectReferences(targetProject, targetDirectories);
+
+            foreach(var directReference in directReferences)
+            {
+                yield return $"\"{ProjectInformationFactory.Create(directReference).AssemblyName}\"->\"{ProjectInformationFactory.Create(targetProject).AssemblyName}\"";
+            }
+
+            yield return "}";
+        }
+
+        internal static IEnumerable<string> GraphDownlineTree(string targetProject, IEnumerable<string> targetDirectories)
+        {
+            ProjectInformation[] projectsToScan = LoadProjectInformation(targetDirectories).ToArray();
+
+            yield return "digraph g {";
+
+            yield return $"\"{ProjectInformationFactory.Create(targetProject).AssemblyName}\"";
+
+            Stack<string> projectsToEvaluate = new Stack<string>();
+            HashSet<string> resolvedProjects = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+
+            // Seed this with our project
+            projectsToEvaluate.Push(targetProject);
+
+            while (projectsToEvaluate.Count != 0)
+            {
+                string currentProject = projectsToEvaluate.Pop();
+
+                if (resolvedProjects.Contains(currentProject))
+                {
+                    // Save the stack and don't do anything
+                }
+                else
+                {
+                    // Mark this project as resolved
+                    resolvedProjects.Add(currentProject);
+
+                    IEnumerable<string> directReferences = ForDirectReferences(currentProject, projectsToScan);
+
+                    foreach (string directReference in directReferences)
+                    {
+                        yield return $"\"{ProjectInformationFactory.Create(directReference).AssemblyName}\"->\"{ProjectInformationFactory.Create(currentProject).AssemblyName}\"";
+
+                        if (!resolvedProjects.Contains(directReference))
+                        {
+                            projectsToEvaluate.Push(directReference);
+                        }
+                    }
+                }
+            }
+
+            yield return "}";
         }
 
     }
