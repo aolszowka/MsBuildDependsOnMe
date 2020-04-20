@@ -25,6 +25,7 @@ namespace MsBuildDependsOnMe
             {
                 ".csproj",
                 ".fsproj",
+                ".sqlproj",
                 ".synproj",
                 ".vbproj",
             };
